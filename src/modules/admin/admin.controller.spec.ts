@@ -82,6 +82,23 @@ describe('AdminController', () => {
     });
   });
 
+  describe('updateBook', () => {
+    it('should successfully update a book', async () => {
+      const category = await categoryModel.findOne({ isDeleted: false });
+      createBookSub.categoryId = category.id;
+      const publisher = await publisherModel.findOne({ isDeleted: false });
+      createBookSub.publisherId = publisher.id;
+      const book = await bookModel.create(createBookSub);
+      const response = await controller.updateBook(book._id.toString(), {
+        bookName: createBookSub.bookName,
+        description: createBookSub.description,
+        categoryId: createBookSub.categoryId.toString(),
+        publisherId: createBookSub.publisherId.toString(),
+      });
+      expect(response.book.bookName).toBe(createBookSub.bookName);
+    });
+  });
+
   describe('removeBook', () => {
     it('should successfully remove a book', async () => {
       const category = await categoryModel.findOne({ isDeleted: false });
