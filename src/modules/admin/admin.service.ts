@@ -145,7 +145,20 @@ export class AdminService {
         .find({ isDeleted: false })
         .sort({ createdAt: -1 })
         .lean();
-      return users;
+      return await Promise.all(
+        users.map(async (user) => {
+          const data: any = { ...user, books: [] };
+          const booksUserBorrowed = await this.inventoryModel
+            .find({ user: user._id, recovered: false })
+            .populate(['book']);
+          if (booksUserBorrowed.length > 0) {
+            booksUserBorrowed.forEach((book) => {
+              data.books.push(book);
+            });
+          }
+          return data;
+        }),
+      );
     } catch (e) {
       this.logger.debug(e.message);
       return [];
