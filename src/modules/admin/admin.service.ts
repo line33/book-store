@@ -127,7 +127,26 @@ export class AdminService {
         .populate(['category', 'publisher'])
         .lean();
 
-      return books;
+      return await Promise.all(
+        books.map(async (book) => {
+          const data: any = { ...book };
+          if (book.borrowed) {
+            const inventory: any = await this.inventoryModel.findOne({
+              book: book._id,
+            });
+            const expectedReturnDate = new Date(inventory.dateCollected);
+            expectedReturnDate.setDate(
+              inventory.dateCollected.getDate() + inventory.duration,
+            );
+            const today = new Date();
+            data.dateCollected = inventory.dateCollected;
+            data.returnDate = expectedReturnDate;
+            data.collectionStatus =
+              data.returnDate < today ? 'Overdue' : 'Active';
+          }
+          return data;
+        }),
+      );
     } catch (e) {
       this.logger.debug(e.message);
       return [];
